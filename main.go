@@ -4,19 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
-	//"io"
-	//"io/ioutil"
-	//_ "github.com/go-sql-driver/mysql"
-	//"unicode/utf8" 哈哈
 )
 
 func main() {
-	serve()
-	//view()
-	//QR()
+	//serve()
+	dbdo()
 }
 
 func dbdo() {
@@ -39,10 +37,19 @@ func dbdo() {
 
 	rows, err := db.Query("SELECT name,age FROM users")
 
+	var users = map[int]User{}
+
 	for rows.Next() {
+		index := 0
 		rows.Scan(&u.name, &u.age)
 
-		fmt.Printf("name is %s, age is %d \n", u.name, u.age)
+		rows.Scan(users[index].name, users[index].age)
+		index++
+		//fmt.Printf("name is %s, age is %d \n", u.name, u.age)
+	}
+
+	for index := 0; index < len(users); index++ {
+		fmt.Print(users[index].name)
 	}
 
 }
@@ -54,21 +61,83 @@ func serve() {
 
 func route() {
 
-	http.HandleFunc("/", QR)
+	http.HandleFunc("/", Index)
+	http.HandleFunc("/users", users)
 
 }
 
-//QR http server 方法
-func QR(w http.ResponseWriter, req *http.Request) {
-	//var tpfile := ioutil.ReadFile("E:\\kwork\\goPro\\cget\\views\\index.html")
-	var templ, err = template.ParseFiles("./views/index.html")
-	if err != nil || templ == nil {
+//dealHtmlFile 处理页面内 资源文件
+func dealHtmlFile(r *http.Request) (data []byte, contentType string) {
+
+	path := r.URL.Path[1:]
+	log.Println(path)
+	data, err1 := ioutil.ReadFile(string(path))
+
+	if err1 != nil {
+		fmt.Println("file read error")
+	}
+
+	//var contentType string
+
+	if strings.HasSuffix(path, ".css") {
+		contentType = "text/css"
+	} else if strings.HasSuffix(path, ".html") {
+		contentType = "text/html"
+	} else if strings.HasSuffix(path, ".js") {
+		contentType = "application/javascript"
+	} else if strings.HasSuffix(path, ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(path, ".svg") {
+		contentType = "image/svg+xml"
+	} else {
+		contentType = "text/plain"
+	}
+
+	//file = data
+
+	return
+}
+
+//Index http server 方法
+func Index(w http.ResponseWriter, r *http.Request) {
+
+	data, contentType := dealHtmlFile(r)
+
+	w.Header().Add("Content Type", contentType)
+	w.Write(data)
+
+	var tpl, err = template.ParseFiles("./views/index.html")
+	if err != nil || tpl == nil {
 		fmt.Print("解析错误")
 	}
 
-	//var templ = template.Must(template.New("index").ParseFiles("E:\\kwork\\goPro\\cget\\views\\index.html"))
-	//var templ = template.Must(template.New("index").Parse("hello html template"))
-	templ.Execute(w, "index")
-	fmt.Print("解析 ok")
+	tpl.Execute(w, "index")
+
+}
+
+func users(w http.ResponseWriter, r *http.Request) {
+
+	/* data, ct := dealHtmlFile(r)
+
+	w.Header().Add("Content Type", ct)
+	w.Write(data) */
+
+	var tpl, err = template.ParseFiles("./views/users.html")
+	if err != nil || tpl == nil {
+		fmt.Print("解析错误")
+	}
+
+	type users struct {
+		Name string
+		Age  int
+	}
+
+	u := users{"admin", 21}
+	fmt.Print(u.Name)
+
+	tpl.Execute(w, u)
+
+	//直接输出字符串
+	//w.Write([]byte("User list!"))
 
 }
