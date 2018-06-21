@@ -14,18 +14,18 @@
 
 <body>
     <ul class="list-group">
+        
         <li class="list-group-item d-flex justify-content-between align-items-center active">
-            Name : {{ .Name }}
-            <span class="badge badge-secondary badge-pill">age: {{ .Age }}</span>
+            Name : 
+            <span class="badge badge-secondary badge-pill">age: </span>
         </li>
+        {{ range . }}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            List item
-            <span class="badge badge-secondary badge-pill">pill2</span>
+            Name : {{ .Name }}
+            <span class="badge badge-secondary badge-pill">age{{ .Age }}</span>
         </li>
-        <li class="list-group-item d-flex justify-content-between align-items-center disabled">
-            Disabled item
-            <span class="badge badge-secondary badge-pill">pill3</span>
-        </li>
+        {{ end }}
+   
     </ul>
 
     <!-- Optional JavaScript -->

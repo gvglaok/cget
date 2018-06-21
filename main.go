@@ -13,11 +13,17 @@ import (
 )
 
 func main() {
-	//serve()
-	dbdo()
+	serve()
+	//dbdo()
 }
 
-func dbdo() {
+//User 用户表字段
+type User struct {
+	Name string
+	Age  int
+}
+
+func dbdo() (users map[int]User) {
 
 	//db,err := sql.Open("mysql" ,"root:root@/zjcms")
 	db, err := sql.Open("sqlite3", "E:\\kwork\\goPro\\cget\\database\\cget.db?cache=shared&mode=memory")
@@ -29,28 +35,31 @@ func dbdo() {
 
 	defer db.Close()
 
-	type User struct {
-		name, email string
-		age         int
-	}
-	var u User
-
 	rows, err := db.Query("SELECT name,age FROM users")
 
-	var users = map[int]User{}
+	var u User
+
+	//var users map[int]User
+
+	users = make(map[int]User)
+
+	index := 0
 
 	for rows.Next() {
-		index := 0
-		rows.Scan(&u.name, &u.age)
+		rows.Scan(&u.Name, &u.Age)
 
-		rows.Scan(users[index].name, users[index].age)
+		//rows.Scan(users[index].name, users[index].age)
+		users[index] = User{u.Name, u.Age}
 		index++
 		//fmt.Printf("name is %s, age is %d \n", u.name, u.age)
 	}
 
-	for index := 0; index < len(users); index++ {
-		fmt.Print(users[index].name)
-	}
+	/* fmt.Println(len(users))
+	for index := range users {
+		fmt.Printf(users[index].name)
+	} */
+
+	return users
 
 }
 
@@ -127,15 +136,9 @@ func users(w http.ResponseWriter, r *http.Request) {
 		fmt.Print("解析错误")
 	}
 
-	type users struct {
-		Name string
-		Age  int
-	}
+	Users := dbdo()
 
-	u := users{"admin", 21}
-	fmt.Print(u.Name)
-
-	tpl.Execute(w, u)
+	tpl.Execute(w, Users)
 
 	//直接输出字符串
 	//w.Write([]byte("User list!"))
