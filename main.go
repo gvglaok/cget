@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
+	"runtime"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -74,6 +76,7 @@ func dbdo() (users map[int]User) {
 
 func serve() {
 	route()
+	open("http://localhost:8000")
 	http.ListenAndServe("localhost:8000", nil)
 }
 
@@ -152,4 +155,24 @@ func users(w http.ResponseWriter, r *http.Request) {
 	//直接输出字符串
 	//w.Write([]byte("User list!"))
 
+}
+
+//from https://github.com/icza/gowut
+// open opens the specified URL in the default browser of the user.
+func open(url string) error {
+	var cmd string
+	var args []string
+	fmt.Println(runtime.GOOS)
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }
